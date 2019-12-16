@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.2" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.2',
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟a标签target=&amp;quot;_blank&amp;quot;时，碰到的一个父、子tab页面同时卡死的问题。">
+<meta name="keywords" content="window.open,chrome links &amp; process,target=&quot;_blank&quot;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="winodw.open，crash all">
+<meta property="og:url" content="http://yoursite.com/2019/12/16/what-happened-to-winopen/index.html">
+<meta property="og:site_name" content="Surviver">
+<meta property="og:description" content="嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟a标签target=&amp;quot;_blank&amp;quot;时，碰到的一个父、子tab页面同时卡死的问题。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-12-16T08:01:50.160Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="winodw.open，crash all">
+<meta name="twitter:description" content="嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟a标签target=&amp;quot;_blank&amp;quot;时，碰到的一个父、子tab页面同时卡死的问题。">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/12/16/what-happened-to-winopen/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>winodw.open，crash all | Surviver</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Surviver</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">For hunting purpose</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/16/what-happened-to-winopen/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="shen">
+      <meta itemprop="description" content="Daily problem & solution">
+      <meta itemprop="image" content="/post-images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Surviver">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">winodw.open，crash all
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-12-16 10:35:36" itemprop="dateCreated datePublished" datetime="2019-12-16T10:35:36+08:00">2019-12-16</time>
+            
+
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟<code>a</code>标签<code>target=&quot;_blank&quot;</code>时，碰到的一个父、子tab页面同时卡死的问题。</p>
+<a id="more"></a>
+
+<h2 id="前因后果"><a href="#前因后果" class="headerlink" title="前因后果"></a>前因后果</h2><h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p>这里我们的需求是实现一个符合用户习惯的<code>a</code>标签，直接点击的时候，本窗口转跳；按下<code>ctrl</code>/<code>command</code>再点击的时候，打开一个新的tab页。普通的<code>a</code>标签可以实现上述需求，但由于项目使用了<code>react-router</code>（或者是单页框架），如果直接使用<code>a</code>标签+路径进行转跳，每次都重载资源，显然效果不佳。所以在一开始，我们直接使用<code>点击</code>事件和<code>window.open</code>来处理这一切。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">onClick=&#123;e =&gt; &#123;</span><br><span class="line">  e.preventDefault();</span><br><span class="line">  <span class="keyword">const</span> shouldOpenNew = e.metaKey || e.ctrlKey;</span><br><span class="line">  <span class="keyword">if</span> (shouldOpenNew) &#123;</span><br><span class="line">    <span class="comment">// 即使加了noopener也无法解决性能问题，只能解决安全问题</span></span><br><span class="line">    <span class="built_in">window</span>.open(<span class="string">`/web/3?xxx=<span class="subst">$&#123;record.xxx&#125;</span>`</span>, <span class="string">'_blank'</span>, <span class="string">'noopener'</span>);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  router.push(&#123;</span><br><span class="line">    pathname: <span class="string">'/web/3'</span>,</span><br><span class="line">    query: &#123; <span class="attr">xxx</span>: record.xxx &#125;,</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>似乎一切都很顺利，没想到实际测试的时候出了点意外。这段代码在直接点击的时候没有问题，但是在打开新tab页的时候，却发生了父、子tab页同时奔溃的问题。奔溃后，无提示、无<br>经过观察，carsh都是由子tab引发的，且在子tab页打开一段时间后发生的。对子tab页面进行排查时，console里在奔溃前无明显的未捕获错误；从network信息中发现存在5条并发请求一直处于<code>pending</code>状态，penging着penging着就奔溃了。向提供服务的后端同学确认，这一批请求出了点问题，无法返回数据，修复后，我们页面奔溃的问题也解决了。<br>那么，真的时由于这5条请求超时导致页面crash的吗？为什么子页面奔溃会导致父页面也奔溃呢？<br>经过一番查询，发现一些有用的信息：</p>
+<ul>
+<li>window.open打开的页面，将与打开它的页面共享一个线程（ps:本文是针对chrome中的现象，其他浏览器未测试是否有相似现象）。在子窗口可以耗尽资源，引发父窗口奔溃。</li>
+<li>chrome不同的标签页面使用不同进程和线程，但是有个例外，通过a标签的target=”_blank”属性，或者window.open(url)在新窗口中打开页面, 会与父窗口共用进程和线程。为什么呢？还是因为opener。因为opener里有DOM信息。两个进程中同时hold住了DOM信息，在多进程下很难道控制，所以干脆就放在一个进程里了。（<a href="https://imweb.io/topic/584cd0459be501ba17b10aaa" target="_blank" rel="noopener">参考</a>）</li>
+<li>opener全局对象引起的安全问题。使用a标签的target=”_blank”属性，或者window.open(url)在新窗口中打开页面时，子页面的opener是父页面<em>窗口对象</em>。虽然有同源限制，但可以通过window.opener.location = newURL来重写父页面的url，即使与父窗口的页面不同域。</li>
+</ul>
+<p>怀疑是因为后端超时、而前端未处理空值引起的。</p>
+<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>虽然Crash的原因是由后端服务超时+前端异常未处理引起的，但是一番折腾发现winodw.open有这么多问题需要解决。<br>因此，这里采用了一个折中方案：</p>
+<ol>
+<li>采用<code>a</code>标签。解决window.open打开引起的共用线程性能问题。</li>
+<li>普通点击时，阻止默认事件，采用js跳转路由。</li>
+<li>按下<code>ctrl</code>/<code>command</code>再点击时，我们不阻止默认事件，也不使用额外的js，让浏览器的默认行为打开这个链接。</li>
+<li>同时，我们设置rel为<em>noopener noreferrer</em>。每次都打开新的线程，解决性能问题和安全问题。</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> renderJp2Details = <span class="function">(<span class="params">d, record</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; xxx &#125; = record;</span><br><span class="line">  <span class="keyword">const</span> props = &#123;</span><br><span class="line">    style: &#123; <span class="attr">cursor</span>: <span class="string">'pointer'</span> &#125;,</span><br><span class="line">    href: <span class="string">`/web/3?xxx=<span class="subst">$&#123;xxx&#125;</span>`</span>,</span><br><span class="line">    rel: <span class="string">'noopener noreferrer'</span>,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    &lt;a&gt;</span><br><span class="line">      &#123;...props&#125;</span><br><span class="line">      title=&#123;d&#125;</span><br><span class="line">      onClick=&#123;e =&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> shouldOpenNew = e.metaKey || e.ctrlKey;</span><br><span class="line">        <span class="keyword">if</span> (shouldOpenNew) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 让a标签的默认行为来打开</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 使用js来转跳</span></span><br><span class="line">        e.preventDefault();</span><br><span class="line">        router.push(&#123;</span><br><span class="line">          pathname: <span class="string">'/web/3'</span>,</span><br><span class="line">          query: &#123; xxx &#125;,</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">      &#125;&#125;</span><br><span class="line">    &gt;</span><br><span class="line">      &#123;d&#125;</span><br><span class="line">    &lt;<span class="regexp">/a&gt;</span></span><br><span class="line"><span class="regexp">  );</span></span><br><span class="line"><span class="regexp">&#125;;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="知识点"><a href="#知识点" class="headerlink" title="知识点"></a>知识点</h2><h3 id="window-open、target-”-blank”打开的tab，与父页面公用线程"><a href="#window-open、target-”-blank”打开的tab，与父页面公用线程" class="headerlink" title="window.open、target=”_blank”打开的tab，与父页面公用线程"></a>window.open、target=”_blank”打开的tab，与父页面公用线程</h3><ul>
+<li>安全问题，如上所诉。</li>
+<li>性能问题，如上所诉，共用线程，可能耗尽资源造成奔溃。</li>
+<li>使用时，如果是a标签要在新窗口中打开，添加noopener属性；如果是js中打开新窗口，手动将新窗口的opener置为null；</li>
+</ul>
+<h3 id="rel的noopener与noreferrer"><a href="#rel的noopener与noreferrer" class="headerlink" title="rel的noopener与noreferrer"></a>rel的noopener与noreferrer</h3><ul>
+<li><em>noopener</em> If this feature is set, the newly-opened window will open as normal, except that it will not have access back to the originating window (via Window.opener — it returns null). In addition, the window.open() call will also return null, so the originating window will not have access to the new one either.  This is useful for preventing untrusted sites opened via window.open() from tampering with the originating window, and vice versa.</li>
+<li><em>noreferrer</em> If this feature is set, the request to load the content located at the specified URL will be loaded with the request’s referrer set to noreferrer; this prevents the request from sending the URL of the page that initiated the request to the server where the request is sent. In addition, setting this feature also automatically sets noopener.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/open" target="_blank" rel="noopener">参考</a></li>
+</ul>
+<h3 id="如何知道点击时ctrl或command是否按下"><a href="#如何知道点击时ctrl或command是否按下" class="headerlink" title="如何知道点击时ctrl或command是否按下"></a>如何知道点击时ctrl或command是否按下</h3><ul>
+<li>MouseEvent.ctrlKey</li>
+<li>MouseEvent.metaKey</li>
+<li>MouseEvent.altKey</li>
+<li>MouseEvent.shiftKey</li>
+</ul>
+<h3 id="network的线程和tab的线程是同一个吗"><a href="#network的线程和tab的线程是同一个吗" class="headerlink" title="network的线程和tab的线程是同一个吗"></a>network的线程和tab的线程是同一个吗</h3><ul>
+<li>network线程是独立的线程吧。看pdf目录下的有关内容。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://stackoverflow.com/questions/34957480/when-using-window-open-if-the-new-window-freeze-so-too-does-the-parent" target="_blank" rel="noopener">when-using-window-open-if-the-new-window-freeze-so-too-does-the-parent</a><br><a href="https://stackoverflow.com/questions/10910554/how-to-detect-command-shift-click-for-os-x-in-javascript" target="_blank" rel="noopener">how-to-detect-command-shift-click-for-os-x-in-javascript</a><br><a href="https://stackoverflow.com/questions/50773152/when-should-i-use-rel-noreferrer" target="_blank" rel="noopener">when-should-i-use-rel-noreferrer</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/window-open/" rel="tag"># window.open</a>
+          
+            <a href="/tags/chrome-links-process/" rel="tag"># chrome links & process</a>
+          
+            <a href="/tags/target-blank/" rel="tag"># target="_blank"</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/04/docker-check-memory/" rel="next" title="容器指令备忘">
+                <i class="fa fa-chevron-left"></i> 容器指令备忘
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/post-images/avatar.png" alt="shen">
+            
+              <p class="site-author-name" itemprop="name">shen</p>
+              <div class="site-description motion-element" itemprop="description">Daily problem & solution</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">32</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:shenyu.wang64@gmail.com" title="E-Mail &rarr; mailto:shenyu.wang64@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前因后果"><span class="nav-number">1.</span> <span class="nav-text">前因后果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#需求"><span class="nav-number">1.1.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#现象"><span class="nav-number">1.2.</span> <span class="nav-text">现象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解决"><span class="nav-number">1.3.</span> <span class="nav-text">解决</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#知识点"><span class="nav-number">2.</span> <span class="nav-text">知识点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#window-open、target-”-blank”打开的tab，与父页面公用线程"><span class="nav-number">2.1.</span> <span class="nav-text">window.open、target=”_blank”打开的tab，与父页面公用线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rel的noopener与noreferrer"><span class="nav-number">2.2.</span> <span class="nav-text">rel的noopener与noreferrer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何知道点击时ctrl或command是否按下"><span class="nav-number">2.3.</span> <span class="nav-text">如何知道点击时ctrl或command是否按下</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#network的线程和tab的线程是同一个吗"><span class="nav-number">2.4.</span> <span class="nav-text">network的线程和tab的线程是同一个吗</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">shen</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+  <div class="footer-custom">底漏了</div>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.2"></script>
+
+  <script src="/js/motion.js?v=7.1.2"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.2"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.2"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.2"></script>
+<script src="/js/post-details.js?v=7.1.2"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.2"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
