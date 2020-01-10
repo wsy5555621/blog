@@ -97,9 +97,9 @@ Text in a <title> element is not rendered as part of the graphic, but browsers u
 ```
 
 ### 有关clip-path
-用来截取clip-path视图内的像素。一共有两种clip-path。
-* css中的(clip-path)[https://css-tricks.com/clipping-masking-css/]属性。需要IE10以上、Edge12以上，且只支持url类型的。
-* svg的(clip-path)[https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath]属性，IE10以上都支持。
+用来截取clip-path视图内的像素。一共有两种clip-path使用情况。
+* (clip-path for html)[https://css-tricks.com/clipping-masking-css/]属性。需要IE10以上、Edge12以上，且只支持url类型的。
+* (clip-path for svg element)[https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath]属性，IE10以上都支持。
 
 ``` jsx
 <defs>
