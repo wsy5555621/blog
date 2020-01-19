@@ -87,16 +87,18 @@ Docker缓存策略
 * CMD-CMD命令是当Docker镜像被启动后Docker容器将会默认执行的命令。一个Dockerfile中只能有一个CMD命令。通过执行docker run $image $other_command启动镜像可以重载CMD命令。
 
 ## 本地运行docker镜像
-假设做好的镜像叫docker-dtd。可以用`docker image ls`查看。
+假设做好的镜像叫docker。可以用`docker image ls`查看。
 ``` bash
 # -v 前面本机目录:映射到docker里面的
 # 创建一个守护态的Docker容器，然后使用docker attach命令进入该容器
-docker run -itd -v ~/Desktop/work/reta-start-kit:/home/project -p 8080:8080 D-dtd /bin/bash
+docker run -itd -v ~/Desktop/work/reta-start-kit:/home/project -p 8080:8080 D /bin/bash
 docker ps
 CONTAINER ID  IMAGE    COMMAND      CREATED         STATUS          PORTS             
-36d8a036bdf6  D-dtd    "/bin/bash"  16 seconds ago  Up 15 seconds   0.0.0.0:8080->8080/tcp
+36d8a036bdf6  D      "/bin/bash"  16 seconds ago  Up 15 seconds   0.0.0.0:8080->8080/tcp
 # 第一种进入镜像bash的方法
 docker attach 36d8a036bdf6
+# attach后退出shell不退出镜像
+# Type Ctrl+p then Ctrl+q. It will help you to turn interactive mode to daemon mode.
 # 第二种进入镜像bash的方法
 docker exec -it --user root 36d8a036bdf6 /bin/bash // 以root身份运行
 # 退出

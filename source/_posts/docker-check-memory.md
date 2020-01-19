@@ -29,6 +29,7 @@ tags:
 有时候我们想要运行镜像后，进入此镜像的shell中。这里有三个有用的指令，一个用于镜像启动时，一个用于启动后：
 * `docker run -it your-image`适用于运行镜像时。
 * `docker attach container-id`用来连接到正在运行中的容器中。
+* [退出attach的镜像，不关闭它](https://stackoverflow.com/questions/25267372/correct-way-to-detach-from-a-container-without-stopping-it)
 * `docker exec [OPTIONS] container-id COMMAND [ARG...]`用来在运行的镜像中执行相关命令。我们也可以使用`docker exec -it container-id /bin/bash`来进入一个运行的镜像。
 
 
