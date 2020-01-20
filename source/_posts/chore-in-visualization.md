@@ -27,6 +27,7 @@ svg 有各种功能的[标签](https://developer.mozilla.org/en-US/docs/Web/SVG/
 
 - `<g>`标签可以用来分组，也可以用来被`<use>`引用，是最常使用的标签之一。对它做的变换都会被应用到它到子元素中。但是，用`<g cy="xxxx">`来对`<circle>`设置属性是无效对。
 - `<use>`标签对引用方式和渐变的引用方式，注意区分。
+- `<foreignObject>`，svg元素允许包含不同的XML命名空间。在浏览器的上下文中，很可能是XHTML / HTML。可以用这个包裹div。
 
 ```javascript
   <use href="#myCircle" x="10" fill="blue" />
@@ -37,10 +38,10 @@ svg 有各种功能的[标签](https://developer.mozilla.org/en-US/docs/Web/SVG/
 利用`stroke-dasharray`和`stroke-dashoffset`，可以实现一些路径动画。如结合`<circle>`，可以实现进度条的功能。
 - `stroke-dasharray`。线段数组，单值时表示实现和虚线都是该值，双值分别表示实线和虚线的值。***特别的***，如果值采用`percentage`来表示，则其长度是以当前`viewport`为[base](https://www.w3.org/TR/SVG11/painting.html#StrokeProperties)的。
 - `stroke-dashoffset`代表线段的偏移量，最大不超过路径的长度，负值不生效。如果数值为正，则顺时针偏移该值再展示，这显示到我们的试图中，就表现为路径往左边偏移了该值。即，数值为正，路线左偏；为负，路径右偏。
-- 注意：IE下`stroke-dashoffset`是[不生效](https://stackoverflow.com/questions/33812303/svg-animation-is-not-working-on-ie11)的。Edge中是有效的。
+- 注意：IE下`stroke-dashoffset`动画是[不生效](https://stackoverflow.com/questions/33812303/svg-animation-is-not-working-on-ie11)的。Edge中是有效的。
 
 ### \<path\>
-- [各种path的指令](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Paths)。如画半圆，`d="M40.5 40.5 L80,40.5 A45,45 0 0 1 40.5,80"`；`d3.arc()`画圆环。
+- [各种path的指令](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Paths)。如画半圆，`d="M40.5 40.5 L80,40.5 A45,45 0 0 1 40.5,80"`。
 - 如何得出`<path>`的长度呢？svg元素有一个`getTotalLength`方法。
 - `<marker>`可以在`<path>`上添加一个标记，例如箭头。
 - 碰到的现象：`<g><defs><marker>...<marker/></defs></g>`在`<g>`标签定义`<marker>`再引用不生效。
@@ -105,6 +106,16 @@ svg 有各种功能的[标签](https://developer.mozilla.org/en-US/docs/Web/SVG/
   </polyline>
 </svg>
 </html>
+```
+
+### 画一个圆环
+- 可以用`<circle>`画一个圆，用`stroke-width`设置宽度，还可以用`stroke-dasharray`设置间隔。
+- 用d3.arc()来绘制`<path>`。
+
+``` html
+<circle fill="transparent" cx="0" cy="0" r="425" stroke="#46d2f4" stroke-width="5" stroke-dasharray="200px, 4px"></circle>
+
+<path d="M-168.79570687645705,-379.1213649216794A415,415,0,0,1,-7.2427486714726514,-414.93679348990236L-7.0682246070998165,-404.9383165383385A405,405,0,0,0,-164.72834044569905,-369.9859103452534Z" fill="#fff171"></path>
 ```
 
 ### svg\<image\>标签的兼容性
@@ -228,6 +239,66 @@ return grandfaterNode.appendChild(parentNode);
 是svg动画的一种，可以用来做沿着`<path>`的动画。
 - IE11不支持。
 - animateMotion的path不能为`ellipse`等元素，`mpath`也不能指向`ellipse`,即`url(#一个ellipse)`是无效的，[需要吧ellipse转为path](http://complexdan.com/svg-circleellipse-to-path-converter/)。
+
+### gradientUnits问题
+有时我们给一条直线添加线性渐变的`stroke`时，如果它是水平或垂直时，会发现这条直线无法显示。这是由于线性渐变`<linearGradient>`默认采用的是`gradientUnits=objectBoundingBox`。下面是一段测试代码，同时，列出了三种办法
+``` xml
+<svg>
+  <defs>
+    <linearGradient id="grad" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop class="" offset="0%" style="stop-color: red;"></stop>
+      <stop class="" offset="33%" style="stop-color: yellow;"></stop>
+      <stop class="" offset="66%" style="stop-color: pink;"></stop>
+      <stop class="" offset="100%" style="stop-color: blue"></stop>
+    </linearGradient>
+    <linearGradient id="grad_2" x1="0%" x2="100%" y1="0%" y2="0%" gradientUnits="userSpaceOnUse">
+      <stop class="" offset="0%" style="stop-color: red;"></stop>
+      <stop class="" offset="33%" style="stop-color: yellow;"></stop>
+      <stop class="" offset="66%" style="stop-color: pink;"></stop>
+      <stop class="" offset="100%" style="stop-color: blue"></stop>
+    </linearGradient>
+  </defs>
+  <-- Gradient not applied -->
+  <path stroke="url(#grad)" d="M20,20L400,20" style="stroke-width: 10px;"></path>
+
+  <-- Gradient applied since height of 1px -->
+  <path stroke="url(#grad)" d="M20,40L400,41" style="stroke-width: 10px;"></path>
+
+  <-- Gradient applied because of fake initial "move to" -->
+  <path stroke="url(#grad)" d="M-1,-1,M20,60L400,60" style="stroke-width: 10px;"></path>
+
+  <-- Gradient userSpaceOnUse applied -->
+  <path stroke="url(#grad_2)" d="M20,80L400,80" style="stroke-width: 10px;"></path>
+</svg>
+```
+![](/post-images/gradientUnits.jpg)
+这是为什么呢？我们从[spec](https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBox)中可以找到原因：
+> Keyword objectBoundingBox should not be used when the geometry of the applicable element has no width or no height, such as the case of a horizontal or vertical line, even when the line has actual thickness when viewed due to having a non-zero stroke width since stroke width is ignored for bounding box calculations. When the geometry of the applicable element has no width or height and objectBoundingBox is specified, then the given effect (e.g., a gradient or a filter) will be ignored.
+
+## 线性渐变
+### svg渐变
+举例如上。
+
+### Css背景线性渐变
+如何画利用css提供的渐变画一个网格呢？如果要利用`linear-gradient`来画一根线，我们需要`从自己渐变到自己`的方式：
+``` css
+  background-color: #269;
+  background-image: linear-gradient(white 2px, transparent 2px), linear-gradient(90deg, white 2px, transparent 2px);
+  background-size: 100px 100px;
+  background-position: -2px -2px;
+```
+#f6f0cf 12.50%, #f6f0cf 25%
+
+### border渐变
+
+border gradient https://css-tricks.com/gradient-borders-in-css/
+
+
+https://css-tricks.com/gradient-borders-in-css/
+https://www.jianshu.com/p/98d576e1bff6
+https://leaverou.github.io/css3patterns/
+https://stackoverflow.com/questions/2717127/gradient-borders
+
 
 
 ## cavans 相关
