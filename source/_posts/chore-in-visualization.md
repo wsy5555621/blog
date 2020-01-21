@@ -280,26 +280,28 @@ return grandfaterNode.appendChild(parentNode);
 举例如上。
 
 ### Css背景线性渐变
-如何画利用css提供的渐变画一个网格呢？如果要利用`linear-gradient`来画一根线，我们需要`从自己渐变到自己`的方式：
+如何画利用css提供的渐变画一个网格呢？可以利用`linear-gradient`来完成：
 ``` css
   background-color: #269;
   background-image: linear-gradient(white 2px, transparent 2px), linear-gradient(90deg, white 2px, transparent 2px);
   background-size: 100px 100px;
   background-position: -2px -2px;
+
+  background-image: linear-gradient(#f6f0cf 12.50%, #f6f0cf 25%); // 在宽度12.5%-25%有色条
 ```
-#f6f0cf 12.50%, #f6f0cf 25%
-
+更多参数，可以查看[MDN](https://developer.mozilla.org/zh-CN/docs/Web/CSS/linear-gradient)和[入坑线性渐变linear-gradient](https://www.jianshu.com/p/98d576e1bff6)。想看更多例子，可以查看[CSS网格背景](https://leaverou.github.io/css3patterns/)。
 ### border渐变
-
-border gradient https://css-tricks.com/gradient-borders-in-css/
-
-
-https://css-tricks.com/gradient-borders-in-css/
-https://www.jianshu.com/p/98d576e1bff6
-https://leaverou.github.io/css3patterns/
-https://stackoverflow.com/questions/2717127/gradient-borders
-
-
+border也可以定义渐变，不过需要IE11以上支持。这里有一些[例子](https://css-tricks.com/gradient-borders-in-css/)。
+``` css
+.g {
+ border-image: 
+    linear-gradient(
+      to bottom, 
+      red, 
+      rgba(0, 0, 0, 0)
+    ) 1 100%;
+}
+```
 
 ## cavans 相关
 
