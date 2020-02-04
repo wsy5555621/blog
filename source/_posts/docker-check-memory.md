@@ -23,6 +23,7 @@ tags:
 * 镜像复原 `docker load -i 4837420db37e.tgz`。这两个指令可以方便的迁移我们的镜像。
 * 自动清理 `docker [commmand like: volume/container] prune`。`docker rm $(docker ps -aq)`。`docker system prune --volumes`清除所有不相关或不使用的Docker数据。
 * 编译镜像 `docker build -f your-Dockerfile`。
+* docker build过程中使用代理 `docker build --build-arg http_proxy=xxx --build-arg https_proxy=xxx .`。dockerfile中设置环境变量`ENV http_proxy xxx`，会在docker启动后才生效，且该代理会一直存在。具体参考pdf目录下相关文件。
 * 查看docker的事件。这时，我们需要多开一个shell进入`docker events`中。在另一个shell中，正常执行我们的指令。你会发现，我们在第一个shell中可以实时显示容器的内部事件了。
 * PS:各种命令都可以加上`docker xxx --help`来快速查看额外参数的作用。
 
@@ -31,6 +32,17 @@ tags:
 * `docker attach container-id`用来连接到正在运行中的容器中。
 * [退出attach的镜像，不关闭它](https://stackoverflow.com/questions/25267372/correct-way-to-detach-from-a-container-without-stopping-it)
 * `docker exec [OPTIONS] container-id COMMAND [ARG...]`用来在运行的镜像中执行相关命令。我们也可以使用`docker exec -it container-id /bin/bash`来进入一个运行的镜像。
+* 用守护进程进入没有明确CMD指令的镜像，这类镜像一起动就会自动退出：`docker run -it container-id /bin/sh`。
+* dockerfile指令:
+  - `COPY` 复制文件
+  - `ADD` 更高级的复制文件
+  - `CMD` 容器启动命令
+  - `ENTRYPOINT` 入口点
+  - `ENV` 设置环境变量
+  - `ARG` 写在dockerfile里的，用于构建镜像时的构建参数
+  - `VOLUME` 定义匿名卷
+  - `EXPOSE` 暴露端口
+  - `WORKDIR` 指定工作目录
 
 
 ### 利用docker-compose部署多个服务

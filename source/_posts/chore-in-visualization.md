@@ -8,7 +8,7 @@ tags:
   - threeJs
 ---
 
-这篇文章本来不知道该什么时候起笔，怎么起笔，要涵盖什么，最后记成了流水账。干了三个月的可视化开发，就当总结一下，记录一下遇到的，防止遗忘吧。毕竟老一辈可视化开发留下的宗旨是，_上动图_。。。。
+这篇文章本来不知道该什么时候起笔，怎么起笔，要涵盖什么，最后记成了流水账。干了三个月的可视化开发，就当总结一下，记录一下遇到的，防止遗忘吧。毕竟老一辈可视化开发留下的宗旨是，*上动图*。。。。
 
 <!--more-->
 
@@ -124,9 +124,8 @@ svg 有各种功能的[标签](https://developer.mozilla.org/en-US/docs/Web/SVG/
 
 ```html
 <image href="...">
-  <!-- 但是在IE、firefox下，这样引入图片无效，应加上 -->
-  <image width="60" height="90" href="..." preserveAspectRatio="none meet"
-/></image>
+<!-- 但是在IE、firefox下，这样引入图片无效，应加上 -->
+<image width="60" height="90" href="..." preserveAspectRatio="none meet" />
 ```
 
 - `Edge`中，\<image\>，如果动态改变 href 的值，不会重新渲。在 React 中，使用了一个 key 来重载这个标签。
@@ -138,8 +137,8 @@ svg 有各种功能的[标签](https://developer.mozilla.org/en-US/docs/Web/SVG/
   height="16"
   href="{TREND_ICON[getIconTrend(trend)]}"
   preserveAspectRatio="none meet"
-  x="{imagePos}"
-  y="{9}"
+  x="imagePos"
+  y="9"
 />
 ```
 
