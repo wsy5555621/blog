@@ -274,6 +274,65 @@ return grandfaterNode.appendChild(parentNode);
 这是为什么呢？我们从[spec](https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBox)中可以找到原因：
 > Keyword objectBoundingBox should not be used when the geometry of the applicable element has no width or no height, such as the case of a horizontal or vertical line, even when the line has actual thickness when viewed due to having a non-zero stroke width since stroke width is ignored for bounding box calculations. When the geometry of the applicable element has no width or height and objectBoundingBox is specified, then the given effect (e.g., a gradient or a filter) will be ignored.
 
+
+### GeoJSON相关
+在可视化领域，地图方向的开发十分常见。在实践中，我们采用了`d3-geo`和`GeoJSON`的方式来进行。`GeoJSON`是一种对各种地理数据结构进行编码的格式，我们使用`d3-geo`可以很方便的来使用它。
+* 如何居中？有时候直接使用GeoJson生成的地图十分小，这时候需要我们做一些放大操作。现在，`d3-geo`提供了一个方便的方法，即下面代码事例中。
+* 从哪里下载格式？网络上有很多方法，有很多git库我star了，可以供参考。推荐使用阿里云的[`dataV`](http://datav.aliyun.com/tools/atlas/#&lat=29.87994609419456&lng=119.53399658203125&zoom=9)工具集。
+
+``` javascript
+const getPath = () => {
+  const projection = d3
+    .geoMercator()
+    .fitExtent([[originX, originY], [originX + width, originY + height]], GeoJSON);
+
+  return [projection, d3.geoPath().projection(projection)];
+};
+
+// 手动计算缩放的方法
+// https://stackoverflow.com/questions/14492284/center-a-map-in-d3-given-a-geojson-object
+var width  = 300;
+var height = 400;
+
+var vis = d3.select("#vis").append("svg")
+    .attr("width", width).attr("height", height)
+
+d3.json("nld.json", function(json) {
+    // create a first guess for the projection
+    var center = d3.geo.centroid(json)
+    var scale  = 150;
+    var offset = [width/2, height/2];
+    var projection = d3.geo.mercator().scale(scale).center(center)
+        .translate(offset);
+
+    // create the path
+    var path = d3.geo.path().projection(projection);
+
+    // using the path determine the bounds of the current map and use 
+    // these to determine better values for the scale and translation
+    var bounds  = path.bounds(json);
+    var hscale  = scale*width  / (bounds[1][0] - bounds[0][0]);
+    var vscale  = scale*height / (bounds[1][1] - bounds[0][1]);
+    var scale   = (hscale < vscale) ? hscale : vscale;
+    var offset  = [width - (bounds[0][0] + bounds[1][0])/2, height - (bounds[0][1] + bounds[1][1])/2];
+
+    // new projection
+    projection = d3.geo.mercator().center(center)
+      .scale(scale).translate(offset);
+    path = path.projection(projection);
+
+    // add a rectangle to see the bound of the svg
+    vis.append("rect").attr('width', width).attr('height', height)
+      .style('stroke', 'black').style('fill', 'none');
+
+    vis.selectAll("path").data(json.features).enter().append("path")
+      .attr("d", path)
+      .style("fill", "red")
+      .style("stroke-width", "1")
+      .style("stroke", "black")
+  });
+```
+
 ## 线性渐变
 ### svg渐变
 举例如上。
@@ -303,5 +362,50 @@ border也可以定义渐变，不过需要IE11以上支持。这里有一些[例
 ```
 
 ## cavans 相关
+在实践中，我仅仅是依赖ThreeJs库实现了一个简单的3D效果。但是在过程中，各种图形学概念扑面而来，因为不明了为什么，步履蹒跚。
 
-日后在写。。。
+### 三维世界里的三个矩阵
+openGLES中，物体会在五个空间中变换:
+![](/post-images/coordinate_systems.png)
+> 物体本身拥有一个坐标系，叫本地坐标系。把物体放到世界坐标系中，采用了`模型矩阵`，就是执行缩放、平移、旋转操作的过程。此时物体就具有了世界坐标系。再加入`视图矩阵`，包括视点坐标，观察点坐标和方向。现在只差最后一步–投影矩阵，物体就可以呈现出来了。目前显示设备都是二维平面的，所以需要`投影矩阵`来转换物体。投影矩阵通常分为平行投影和透视投影。
+
+![](/post-images/coordinate_systems_1.jpg)
+基于此，一个顶点转换到我们的屏幕上要经历过MVP这三个矩阵，在实际矩阵运算中，则为PVM的形式。
+``` c++
+gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 );
+```
+### 着色器（shader）
+`shader`是一个用GLSL编写的小程序，在GPU上运行。又分为顶点着色器（vertexShader）和片元着色器（fragmentShader）。
+* 顶点着色器对顶点实现了一种通用的可编程方法。
+* 顶点着色器的输出数据是varying变量，在图元光栅化阶段，这些varying值为每个生成的片元进行计算，并将结果作为片元着色器的输入数据。从分配给每个顶点的原始varying值来为每个片元生成一个varying值的机制叫做插值。
+* `顶点着色器`先运行；它接收 attributes，计算和操作每个顶点的位置，并传递额外的数据（varyings）给片段着色器。
+* `片元着色器`后运行；它设置绘制到屏幕上的每个单独的片段（像素）颜色。
+
+着色器中有三种类型的变量：
+- Uniforms 是所有顶点都具有相同的值的变量。比如灯光，雾，和阴影贴图就是被储存在uniforms中的数据。uniforms可以通过顶点着色器和片段着色器来访问。
+- Attributes 与每个顶点关联的变量。例如，顶点位置，法线和顶点颜色都是存储在attributes中的数据。attributes`只可以在顶点着色器`访问。
+- Varyings 是从顶点着色器传递到片段着色器的变量。对于每一个片段，每一个varying的值将是相邻顶点值的平滑插值。
+
+在ThreeJs中，内置了许多属性，包含在[`WebGLProgram`](https://threejs.org/docs/index.html#api/zh/renderers/webgl/WebGLProgram)里。
+
+### 噪声
+水波、云彩，如果想要实现这样的效果，我们应该怎么做？其实，这些都是[`噪声`](https://thebookofshaders.com/11/?lan=ch)的一种形式。
+
+### 阿里webgl的一些胶卷
+![](/post-images/webgl-1.png)
+![](/post-images/webgl-2.png)
+![](/post-images/webgl-3.png)
+![](/post-images/webgl-4.png)
+![](/post-images/webgl-5.png)
+
+### 参考
+- [海量着色器例子](https://www.shadertoy.com/)
+- [ThreeJS着色器打造震撼海洋动画背景](https://zhuanlan.zhihu.com/p/54898150)
+- [Three.js几何体的那些事儿](https://srtian96.gitee.io/blog/2019/01/15/Three.js%E5%87%A0%E4%BD%95%E4%BD%93%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B%E5%84%BF/)
+- [GLSL内建变量](https://blog.csdn.net/hgl868/article/details/7876246)
+- [对OpenGLES中的空间变换的理解](https://blog.csdn.net/srk19960903/article/details/77970630)
+- [WebGL矩阵变换总结（模型矩阵，视图矩阵，投影矩阵）](https://blog.csdn.net/weixin_37683659/article/details/79830278)
+- [学习WebGL之深入了解Shader](https://www.jianshu.com/p/8d297451ac38)
+- [WebGL 三维透视投影](https://webglfundamentals.org/webgl/lessons/zh_cn/webgl-3d-perspective.html)
+- [OpenGL ES基础篇](https://www.jianshu.com/p/438de5a40855)
