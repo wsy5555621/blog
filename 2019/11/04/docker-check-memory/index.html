@@ -104,7 +104,7 @@
 <meta property="og:site_name" content="Surviver">
 <meta property="og:description" content="如今容器技术已经十分成熟了，前后端或运维的日常都离不开它。平时老是用公司线上CI/CD平台来完成部署，突然有了一台隔离环境需要徒手敲命令，却发现自己把命令行的操作指令遗忘了七七八八。这里记录一下docker的常用指令，特别是在单台环境部署多个服务时，docker-compose的内容。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-11-04T09:04:50.572Z">
+<meta property="og:updated_time" content="2020-02-04T09:07:36.812Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="容器指令备忘">
 <meta name="twitter:description" content="如今容器技术已经十分成熟了，前后端或运维的日常都离不开它。平时老是用公司线上CI/CD平台来完成部署，突然有了一台隔离环境需要徒手敲命令，却发现自己把命令行的操作指令遗忘了七七八八。这里记录一下docker的常用指令，特别是在单台环境部署多个服务时，docker-compose的内容。">
@@ -406,6 +406,7 @@
 <li>镜像复原 <code>docker load -i 4837420db37e.tgz</code>。这两个指令可以方便的迁移我们的镜像。</li>
 <li>自动清理 <code>docker [commmand like: volume/container] prune</code>。<code>docker rm $(docker ps -aq)</code>。<code>docker system prune --volumes</code>清除所有不相关或不使用的Docker数据。</li>
 <li>编译镜像 <code>docker build -f your-Dockerfile</code>。</li>
+<li>docker build过程中使用代理 <code>docker build --build-arg http_proxy=xxx --build-arg https_proxy=xxx .</code>。dockerfile中设置环境变量<code>ENV http_proxy xxx</code>，会在docker启动后才生效，且该代理会一直存在。具体参考pdf目录下相关文件。</li>
 <li>查看docker的事件。这时，我们需要多开一个shell进入<code>docker events</code>中。在另一个shell中，正常执行我们的指令。你会发现，我们在第一个shell中可以实时显示容器的内部事件了。</li>
 <li>PS:各种命令都可以加上<code>docker xxx --help</code>来快速查看额外参数的作用。</li>
 </ul>
@@ -413,7 +414,21 @@
 <ul>
 <li><code>docker run -it your-image</code>适用于运行镜像时。</li>
 <li><code>docker attach container-id</code>用来连接到正在运行中的容器中。</li>
+<li><a href="https://stackoverflow.com/questions/25267372/correct-way-to-detach-from-a-container-without-stopping-it" target="_blank" rel="noopener">退出attach的镜像，不关闭它</a></li>
 <li><code>docker exec [OPTIONS] container-id COMMAND [ARG...]</code>用来在运行的镜像中执行相关命令。我们也可以使用<code>docker exec -it container-id /bin/bash</code>来进入一个运行的镜像。</li>
+<li>用守护进程进入没有明确CMD指令的镜像，这类镜像一起动就会自动退出：<code>docker run -it container-id /bin/sh</code>。</li>
+<li>dockerfile指令:<ul>
+<li><code>COPY</code> 复制文件</li>
+<li><code>ADD</code> 更高级的复制文件</li>
+<li><code>CMD</code> 容器启动命令</li>
+<li><code>ENTRYPOINT</code> 入口点</li>
+<li><code>ENV</code> 设置环境变量</li>
+<li><code>ARG</code> 写在dockerfile里的，用于构建镜像时的构建参数</li>
+<li><code>VOLUME</code> 定义匿名卷</li>
+<li><code>EXPOSE</code> 暴露端口</li>
+<li><code>WORKDIR</code> 指定工作目录</li>
+</ul>
+</li>
 </ul>
 <h3 id="利用docker-compose部署多个服务"><a href="#利用docker-compose部署多个服务" class="headerlink" title="利用docker-compose部署多个服务"></a>利用docker-compose部署多个服务</h3><p>在需要同时部署多个服务的时，我们当然可以每次运行一个镜像来启动每一个服务。但有时候，如果服务直接存在相互的依赖关系，一个服务未启动会使另一个服务挂掉，就需要<code>docker-compose</code>出马了。我们这里以一个node服务和一个mongo服务为例，且node服务是依赖mongo服务的。</p>
 <h4 id="写一个”compose-file”"><a href="#写一个”compose-file”" class="headerlink" title="写一个”compose-file”"></a>写一个”compose-file”</h4><p>我们需要在合适的目录下，建立一个<code>docker-compose.yml</code>文件。</p>
@@ -500,8 +515,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/09/07/mix-blend-mode/" rel="next" title="CSS中的mix-blend-mode">
-                <i class="fa fa-chevron-left"></i> CSS中的mix-blend-mode
+              <a href="/2019/10/02/chore-about-node-web/" rel="next" title="node服务中遇到的后端问题">
+                <i class="fa fa-chevron-left"></i> node服务中遇到的后端问题
               </a>
             
           </div>
@@ -583,7 +598,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-count">17</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -666,7 +681,25 @@
                     
                       
                     
-                    <span class="site-state-item-count">32</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">41</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -740,7 +773,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
   <span class="with-love" id="animate">
     <i class="fa fa-user"></i>
   </span>
