@@ -12,7 +12,7 @@ tags:
 
 ### 什么问题
 
-最近 Chrome 更新到了 79，打开某项目赫然发现一条**error**level 的日志:
+最近 Chrome 更新到了 79，打开某项目赫然发现一条 **error** level 的日志:
 
 > [Intervention] Unable to preventDefault inside passive event listener due to target being treated as passive. See https://www.chromestatus.com/features/66626470
 
