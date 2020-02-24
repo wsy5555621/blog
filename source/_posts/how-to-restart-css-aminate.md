@@ -101,6 +101,8 @@ class改变不是立即执行reflow的相关操作，这应该算是一个性能
 * activation of CSS pseudo classes such as :hover (in IE the activation of the pseudo class of a sibling)
 * setting a property of the style attribute
 
+有兴趣还可以参考[reflow和repaint引发的性能问题](https://juejin.im/post/5a9372895188257a6b06132e)。
+
 浏览器的渲染过程：[Debugging CSS & Render Performance](https://www.youtube.com/watch?v=gqc88qWuiI4)
 ![](/post-images/rendering-circle-1.png)
 ![](/post-images/rendering-circle-2.png)
