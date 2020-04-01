@@ -53,6 +53,10 @@ tags:
 现在 cpu 的架构很多，平时我们使用的都是`x86`，在此环境下编译出的镜像，是不能在`ARM`架构下使用的。想要构建`ARM`架构下的镜像，需要从头开始编译。
 运行与架构不匹配的镜像时，可能出现以下错误:
 
+``` bash
+# 一个arm架构的信息 uname -a
+# Linux localhost.localdomain 4.14.0-115.el7a.0.1.aarch64 #1 SMP Sun Nov 25 20:54:21 UTC 2018 aarch64 aarch64 aarch64 GNU/Linux
+```
 > standard_init_linux.go:211: exec user process caused "exec format error"
 
 同样的问题在`docker build`中也可能出现，这是由于使用了`RUN`命令：
