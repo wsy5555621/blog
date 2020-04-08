@@ -142,14 +142,14 @@ packageNow();
 
 ### 运行
 
-我们成功的打出了包，该怎么运行呢？进入文件目录下，执行：
+我们成功的打出了包，该怎么运行呢？我们的构建产物就是一个可执行文件，和原来的启动脚本执行相同的操作，只是文件路径变了，会有一个前缀`/snapshot`。进入文件目录下，执行：
 
 ```bash
 ./app-macos start /snapshot/app --port=7001 --env=prod --workers=2
 # 环境变量 unix export
 export MYSQL_HOST=localhost ... && ./app-macos start /snapshot/app --port=7001 --env=prod --workers=2
 #  win set
-SET MYSQL_HOST=localhost ... && ./app-win start /snapshot/app --port=7001 --env=prod --workers=2
+SET MYSQL_HOST=localhost ... && .\app-win.exe start C:\snapshot\app --title=app --workers=2 --env=prod
 ```
 
 snapshot是`pkg`虚拟出来的目录结构。
