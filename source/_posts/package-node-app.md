@@ -168,6 +168,7 @@ snapshot是`pkg`虚拟出来的目录结构。
 [例子](https://github.com/MrSmallLiu/pkg-egg-example)
 [node打包讨论帖子](https://cnodejs.org/topic/5bc712ae37a6965f59052301)
 [http://enclose.io/](http://enclose.io/)
+[pkg-decompile](https://github.com/zeit/pkg/issues/340)
 
 ## 结尾
 
