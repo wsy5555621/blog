@@ -160,6 +160,17 @@ snapshot是`pkg`虚拟出来的目录结构。
 
 > pkg 的打包原理简单来说，就是将 js 代码以及相关的资源文件打包到可执行文件中，然后劫持 fs 里面的一些函数，使它能够读到可执行文件中的代码和资源文件。例如，原来的 require('./a.js')会被劫持到一个虚拟目录 require('/snapshot/a.js')。
 
+和[node-packer](https://github.com/pmq20/node-packer)的对比：
+> Pkg hacked fs.* API's dynamically in order to access in-package files, whereas Node.js Compiler leaves them alone and instead works on a deeper level via libsquash. Pkg uses JSON to store in-package files while Node.js Compiler uses the more sophisticated and widely used SquashFS as its data structure.
+
+## 参考
+[Egg.js线上打包部署](https://blog.csdn.net/qq_35241223/article/details/97306900)
+[例子](https://github.com/MrSmallLiu/pkg-egg-example)
+[node打包讨论帖子](https://cnodejs.org/topic/5bc712ae37a6965f59052301)
+[http://enclose.io/](http://enclose.io/)
+
 ## 结尾
 
 看看这文章，吧唧吧唧就这么点，也不是很困难嘛。可是我回想起捣鼓的这一天，一步一步调试的绝望和挣扎，就在质疑当时的自己，搞什么 egg，搞事情。以防遗忘，记录一下。
+
+顺便说一句，总有大牛还能反编译出咱的代码～～
