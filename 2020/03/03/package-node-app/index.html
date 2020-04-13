@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.2" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.2',
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="平时交付 node 应用，前后端混淆一下代码，打包成一个docker镜像就交付了。虽然懂的人进入 docker 下依旧能拿到所有代码，但好歹防了一手小白。突然碰到一个客户，要求应用在windows下使用，还不允许装 docker。如果进行裸部，显得十分不专业。">
+<meta name="keywords" content="node pack,egg,pkg">
+<meta property="og:type" content="article">
+<meta property="og:title" content="打包node应用">
+<meta property="og:url" content="http://yoursite.com/2020/03/03/package-node-app/index.html">
+<meta property="og:site_name" content="Surviver">
+<meta property="og:description" content="平时交付 node 应用，前后端混淆一下代码，打包成一个docker镜像就交付了。虽然懂的人进入 docker 下依旧能拿到所有代码，但好歹防了一手小白。突然碰到一个客户，要求应用在windows下使用，还不允许装 docker。如果进行裸部，显得十分不专业。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/post-images/pkg-1.png">
+<meta property="og:image" content="http://yoursite.com/post-images/pkg-2.png">
+<meta property="og:updated_time" content="2020-04-09T01:53:39.809Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="打包node应用">
+<meta name="twitter:description" content="平时交付 node 应用，前后端混淆一下代码，打包成一个docker镜像就交付了。虽然懂的人进入 docker 下依旧能拿到所有代码，但好歹防了一手小白。突然碰到一个客户，要求应用在windows下使用，还不允许装 docker。如果进行裸部，显得十分不专业。">
+<meta name="twitter:image" content="http://yoursite.com/post-images/pkg-1.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2020/03/03/package-node-app/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>打包node应用 | Surviver</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Surviver</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">For hunting purpose</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/03/package-node-app/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="shen">
+      <meta itemprop="description" content="Daily problem & solution">
+      <meta itemprop="image" content="/post-images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Surviver">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">打包node应用
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-03-03 13:14:15" itemprop="dateCreated datePublished" datetime="2020-03-03T13:14:15+08:00">2020-03-03</time>
+            
+
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>平时交付 node 应用，前后端混淆一下代码，打包成一个<code>docker</code>镜像就交付了。虽然懂的人进入 docker 下依旧能拿到所有代码，但好歹防了一手小白。突然碰到一个客户，要求应用在<code>windows</code>下使用，还<code>不允许</code>装 docker。如果进行裸部，显得十分不专业。</p>
+<a id="more"></a>
+
+<p>项目中用了 egg + egg-mysql。</p>
+<h2 id="心路历程"><a href="#心路历程" class="headerlink" title="心路历程"></a>心路历程</h2><ul>
+<li>如果裸部，则需要给客户安装 node 环境，安装 node 依赖（还包括内部私有的依赖），混淆代码。而客户现场又不通网，简直是地狱难度。</li>
+<li><code>UglifyJs</code>不支持 ES6。项目使用 node 12 来写，直接就用了 ES6 语法。如果要使用这个混淆工具，还要配置一遍 babel，过于繁琐了。</li>
+<li>egg 的配置是动态载入的，混淆时一个不小心，这部分还可能出问题，很忧伤。</li>
+<li>去 node 社区一番寻觅，发现有很多打包的解决方案。<code>pkg</code>是一款不错的打包工具。它支持 win、linux、macos 等平台，构建产物是对应平台下的一个可执行文件（包含了 node 环境），一键执行，十分便捷。</li>
+</ul>
+<h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>安装了<code>pkg</code>后，在 package.json 中添加相关配置。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span>: <span class="string">"app"</span>,</span><br><span class="line">  <span class="attr">"bin"</span>: <span class="string">"run.js"</span>,</span><br><span class="line">  <span class="attr">"pkg"</span>: &#123;</span><br><span class="line">    <span class="attr">"assets"</span>: [</span><br><span class="line">      <span class="string">"./config/*.js"</span>,</span><br><span class="line">      <span class="string">"./app.js"</span>,</span><br><span class="line">      <span class="string">"./app/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/nanoid/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/egg-mysql/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/egg/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./config/manifest.json"</span>,</span><br><span class="line">      <span class="string">"./package.json"</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"targets"</span>: [<span class="string">"node12-macos-x64"</span>, <span class="string">"node12-win-x64"</span>, <span class="string">"node12-linux-x64"</span>]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>bin</code>很重要，它是你应用对外暴露的入口。我们使用了 egg，这里需要把启动命令提出来：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// run.js</span></span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">"path"</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">require</span>(path.join(__dirname, <span class="string">"/node_modules/egg-scripts/bin/egg-scripts.js"</span>));</span><br></pre></td></tr></table></figure>
+
+<p><code>pkg-assets/scripts</code>是需要的资源文件。<br><code>pkg-targets</code>是配置产物运行的环境。</p>
+<h3 id="下载-node-环境的依赖"><a href="#下载-node-环境的依赖" class="headerlink" title="下载 node 环境的依赖"></a>下载 node 环境的依赖</h3><p>配置完了，进入项目目录输入一下命令开始构建应用。</p>
+<blockquote>
+<p>pkg . –out-path ./dist –debug</p>
+</blockquote>
+<p>因为网络问题，第一步下载依赖就卡住了。<br><img src="/post-images/pkg-1.png" alt></p>
+<p>通过看<code>pkg</code>源码，它使用了一个<code>pkg-fetch</code>的包来管理依赖文件。它会去<code>os.homedir()/.pkg-cache/v2.6/</code>目录下看有没有缓存，没有就下载，有就直接使用。那么我们去<a href="https://github.com/zeit/pkg-fetch/releases" target="_blank" rel="noopener">这里</a>把依赖下下来，放到这个目录下就好了。记得改名适应它的匹配规则:<br><img src="/post-images/pkg-2.png" alt></p>
+<p>ps：<code>node12</code>会默认下载 latest 的版本，node 发版本了会造成缓存失效，又进行依赖下载。可以指定<code>node12.13.1</code>来使用以前下的缓存。</p>
+<p>ps：过了几天在<code>su</code>下执行了构建，发现又要下依赖。心想这不科学啊，一番跟踪发现<code>su</code>下的<code>os.homedir()</code>和普通用户的 home 目录不同～～</p>
+<h3 id="构建出错"><a href="#构建出错" class="headerlink" title="构建出错"></a>构建出错</h3><p>我们在构建时加了<code>--debug</code>，输出日志方便定位问题。</p>
+<blockquote>
+<p>Error! This experimental syntax requires enabling one of the following parser plugin(s): ‘decorators-legacy, decorators’ (14:0)<br>/Users/bm/Documents/personal-project/projectprojectname/node_modules/loaders.css/loaders.css</p>
+</blockquote>
+<p>这个错误是因为<code>pkg</code>会分析配置文件里的<code>dependencies</code>的各种包。有些前端的包含有 less 文件，有@语法，引起了这个报错。我们在上面进行构建时，没有特别指定配置文件，<code>pkg</code>则使用了默认的 package.json，由于前后端都放在一个工程开发了，这才引起了这个问题。<br>我们可以指定自己的配置文件，剔除前端的依赖。</p>
+<h3 id="运行出错"><a href="#运行出错" class="headerlink" title="运行出错"></a>运行出错</h3><p>解决了构建时的问题，美滋滋的得到了第一个产物包。一运行，发现数据库实例没有初始化，egg 也没有报错。又经过了漫长的追踪，发现因为 plugin 是 egg 动态引入的，pkg 在构建时无法分析出这一点，所以 egg-mysql 不会自动被打入构建产物中（虽然它已经在 dependencies 中了）。我们要在<code>pkg/assets</code>中手动加入。</p>
+<h3 id="使用脚本构建"><a href="#使用脚本构建" class="headerlink" title="使用脚本构建"></a>使用脚本构建</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// package.json中</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"name"</span>: <span class="string">"app"</span>,</span><br><span class="line">  <span class="string">"scripts"</span>: &#123;</span><br><span class="line">    <span class="string">"pkg"</span>: <span class="string">"npm run build &amp;&amp; node ./pkg.js"</span>,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pkg.js</span></span><br><span class="line"><span class="keyword">const</span> &#123; exec &#125; = <span class="built_in">require</span>(<span class="string">'pkg'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123; copySync, remove, pathExistsSync &#125; = <span class="built_in">require</span>(<span class="string">'fs-extra'</span>);</span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> packageNow = <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">  <span class="keyword">await</span> remove(path.join(__dirname, <span class="string">'./dist'</span>));</span><br><span class="line">  <span class="keyword">const</span> frontBuildPath = path.join(__dirname, <span class="string">'./app/public'</span>);</span><br><span class="line">  <span class="keyword">if</span> (pathExistsSync(frontBuildPath)) &#123;</span><br><span class="line">    <span class="keyword">await</span> copySync(path.join(__dirname, <span class="string">'./app/public'</span>), path.join(__dirname, <span class="string">'./dist/public'</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">await</span> exec(<span class="string">'run.js --config ./pkg.json --out-path ./dist --debug'</span>.split(<span class="string">' '</span>));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">packageNow();</span><br><span class="line"></span><br><span class="line"><span class="comment">// pkg.json</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"name"</span>: <span class="string">"app"</span>,</span><br><span class="line">  <span class="string">"bin"</span>: <span class="string">"run.js"</span>,</span><br><span class="line">  <span class="string">"pkg"</span>: &#123;</span><br><span class="line">    <span class="string">"assets"</span>: [</span><br><span class="line">      <span class="string">"./config/*.js"</span>,</span><br><span class="line">      <span class="string">"./app.js"</span>,</span><br><span class="line">      <span class="string">"./app/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/nanoid/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/egg-mysql/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./node_modules/egg/**/*.js"</span>,</span><br><span class="line">      <span class="string">"./config/manifest.json"</span>,</span><br><span class="line">      <span class="string">"./package.json"</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="string">"targets"</span>: [<span class="string">"node12.13.1-macos-x64"</span>, <span class="string">"node12.13.1-win-x64"</span>, <span class="string">"node12.13.1-linux-x64"</span>]</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">"dependencies"</span>: &#123;</span><br><span class="line">    <span class="string">"cross-env"</span>: <span class="string">"^5.2.0"</span>,</span><br><span class="line">    <span class="string">"..."</span>: <span class="string">"^2.12.0"</span>,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h3><p>我们成功的打出了包，该怎么运行呢？我们的构建产物就是一个可执行文件，和原来的启动脚本执行相同的操作，只是文件路径变了，会有一个前缀<code>/snapshot</code>。进入文件目录下，执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">./app-macos start /snapshot/app --port=7001 --env=prod --workers=2</span><br><span class="line"><span class="comment"># 环境变量 unix export</span></span><br><span class="line"><span class="built_in">export</span> MYSQL_HOST=localhost ... &amp;&amp; ./app-macos start /snapshot/app --port=7001 --env=prod --workers=2</span><br><span class="line"><span class="comment">#  win set</span></span><br><span class="line">SET MYSQL_HOST=localhost ... &amp;&amp; .\app-win.exe start C:\snapshot\app --title=app --workers=2 --env=prod</span><br></pre></td></tr></table></figure>
+
+<p>snapshot是<code>pkg</code>虚拟出来的目录结构。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>抄了一段<code>pkg</code>的打包原理：</p>
+<blockquote>
+<p>pkg 的打包原理简单来说，就是将 js 代码以及相关的资源文件打包到可执行文件中，然后劫持 fs 里面的一些函数，使它能够读到可执行文件中的代码和资源文件。例如，原来的 require(‘./a.js’)会被劫持到一个虚拟目录 require(‘/snapshot/a.js’)。</p>
+</blockquote>
+<p>和<a href="https://github.com/pmq20/node-packer" target="_blank" rel="noopener">node-packer</a>的对比：</p>
+<blockquote>
+<p>Pkg hacked fs.* API’s dynamically in order to access in-package files, whereas Node.js Compiler leaves them alone and instead works on a deeper level via libsquash. Pkg uses JSON to store in-package files while Node.js Compiler uses the more sophisticated and widely used SquashFS as its data structure.</p>
+</blockquote>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/qq_35241223/article/details/97306900" target="_blank" rel="noopener">Egg.js线上打包部署</a><br><a href="https://github.com/MrSmallLiu/pkg-egg-example" target="_blank" rel="noopener">例子</a><br><a href="https://cnodejs.org/topic/5bc712ae37a6965f59052301" target="_blank" rel="noopener">node打包讨论帖子</a><br><a href="http://enclose.io/" target="_blank" rel="noopener">http://enclose.io/</a><br><a href="https://github.com/zeit/pkg/issues/340" target="_blank" rel="noopener">pkg-decompile</a></p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>看看这文章，吧唧吧唧就这么点，也不是很困难嘛。可是我回想起捣鼓的这一天，一步一步调试的绝望和挣扎，就在质疑当时的自己，搞什么 egg，搞事情。以防遗忘，记录一下。</p>
+<p>顺便说一句，总有大牛还能反编译出咱的代码～～</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/node-pack/" rel="tag"># node pack</a>
+          
+            <a href="/tags/egg/" rel="tag"># egg</a>
+          
+            <a href="/tags/pkg/" rel="tag"># pkg</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/11/how-to-restart-css-aminate/" rel="next" title="重启CSS动画？">
+                <i class="fa fa-chevron-left"></i> 重启CSS动画？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/post-images/avatar.png" alt="shen">
+            
+              <p class="site-author-name" itemprop="name">shen</p>
+              <div class="site-description motion-element" itemprop="description">Daily problem & solution</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">46</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:shenyu.wang64@gmail.com" title="E-Mail &rarr; mailto:shenyu.wang64@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#心路历程"><span class="nav-number">1.</span> <span class="nav-text">心路历程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#过程"><span class="nav-number">2.</span> <span class="nav-text">过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置"><span class="nav-number">2.1.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下载-node-环境的依赖"><span class="nav-number">2.2.</span> <span class="nav-text">下载 node 环境的依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构建出错"><span class="nav-number">2.3.</span> <span class="nav-text">构建出错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行出错"><span class="nav-number">2.4.</span> <span class="nav-text">运行出错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用脚本构建"><span class="nav-number">2.5.</span> <span class="nav-text">使用脚本构建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行"><span class="nav-number">2.6.</span> <span class="nav-text">运行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原理"><span class="nav-number">3.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结尾"><span class="nav-number">5.</span> <span class="nav-text">结尾</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">shen</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+  <div class="footer-custom">底漏了</div>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.2"></script>
+
+  <script src="/js/motion.js?v=7.1.2"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.2"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.2"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.2"></script>
+<script src="/js/post-details.js?v=7.1.2"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.2"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
