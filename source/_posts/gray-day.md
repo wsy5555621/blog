@@ -45,6 +45,7 @@ CSS3中的滤镜是实现这个效果的首选。它包含了诸多属性，例�
 * 引用grayscale.js。可以参考`/pdf/cross-browser-grayscale-ie11.zip`
 
 
-[参考](https://stackoverflow.com/questions/14813142/internet-explorer-10-how-to-apply-grayscale-filter)
+[ie10-how-to-apply-grayscale-filter](https://stackoverflow.com/questions/14813142/internet-explorer-10-how-to-apply-grayscale-filter)
 [彩色转灰度算法](https://github.com/aooy/blog/issues/4)
 [RGB 转为灰度值的心理学公式 Gray = 0.30R + 0.59G + 0.11B 是怎么来的？](https://www.zhihu.com/question/22039410)
+[IE 6~8使用其独有的滤镜](http://www.ruanyifeng.com/blog/2010/03/cross-browser_css3_features.html)
