@@ -56,6 +56,11 @@ tags:
   - `none` 此方式下，容器不启用任何网络
   - 有时候我们从外部访问容器，可能出现`connection reset by peer`的错误，而在容器内部却访问的通。我们可以试试使用`docker run -d --network="host"`改变使用的网络方式，来判断是不是网络问题引起的。但是"host"模式并不是很安全。
 
+
+- 查看存储卷 `docker volume ls`
+- 创建存储卷 `docker volume create --name xxx`
+- 获取容器/镜像的元数据 `docker inspect`可以查看镜像（image）、存储卷（volume）、容器（container）信息
+
 ### 在 ARM 架构下编译
 
 现在 cpu 的架构很多，平时我们使用的都是`x86`，在此环境下编译出的镜像，是不能在`ARM`架构下使用的。想要构建`ARM`架构下的镜像，需要从头开始编译。
