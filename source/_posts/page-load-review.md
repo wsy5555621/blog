@@ -207,13 +207,15 @@ DCL 和 Onload 事件有什么区别呢？
 - 在触发时机上。当`HTML被完全加载以及解析时`，DCL 事件便会触发，而不必等待样式表，图片或者子框架完成加载。Onload 则需要等待整个页面所有资源都加载完毕，才会被触发。
 - 除了 window 的 load 事件外，image/JS/CSS/XMLHttpRequest 都有其 load 事件。
 
-readyState有4个值，会在`readystatechange`事件中触发。
+readyState 有 4 个值，会在`readystatechange`事件中触发。
+
 - uninitialized - 还未开始载入
 - loading - 载入中
 - interactive - 已加载，文档与用户可以开始交互
 - complete - 载入完成
 
 它们之间的关系是：
+
 1. readystate: interactive
 2. DOMContentLoaded
 3. readystate: complete
@@ -226,6 +228,8 @@ readyState有4个值，会在`readystatechange`事件中触发。
 - FCP First Contentful Paint
 - FMP First Meaningful Paint
 - LCP Largest Contentful Paint
+- lighthouse 是怎么定义的这些指标？可以从 lighthouse[代码](https://github.com/GoogleChrome/lighthouse/blob/1f07249f3f8653d66766815fb5ff4f125878cc28/lighthouse-core/audits/metrics/first-contentful-paint.js)中查看。
+- [Lighthouse 测试内幕](https://zhuanlan.zhihu.com/p/91365316)
 
 ## 有关 CSSOM
 
