@@ -104,7 +104,7 @@
 <meta property="og:site_name" content="Surviver">
 <meta property="og:description" content="嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟a标签target=&amp;quot;_blank&amp;quot;时，碰到的一个父、子tab页面同时卡死的问题。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-12-16T09:41:46.865Z">
+<meta property="og:updated_time" content="2020-04-21T14:43:24.181Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="winodw.open，crash all">
 <meta name="twitter:description" content="嘻嘻，标题夸张了点。这篇文章主要是记录一下，使用window.open来模拟a标签target=&amp;quot;_blank&amp;quot;时，碰到的一个父、子tab页面同时卡死的问题。">
@@ -395,13 +395,12 @@
 <h2 id="前因后果"><a href="#前因后果" class="headerlink" title="前因后果"></a>前因后果</h2><h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p>这里我们的需求是实现一个符合用户习惯的<code>a</code>标签，直接点击的时候，本窗口转跳；按下<code>ctrl</code>/<code>command</code>再点击的时候，打开一个新的tab页。普通的<code>a</code>标签可以实现上述需求，但由于项目使用了<code>react-router</code>（或者是单页框架），如果直接使用<code>a</code>标签+路径进行转跳，每次都重载资源，显然效果不佳。所以在一开始，我们直接使用<code>点击</code>事件和<code>window.open</code>来处理这一切。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">onClick=&#123;e =&gt; &#123;</span><br><span class="line">  e.preventDefault();</span><br><span class="line">  <span class="keyword">const</span> shouldOpenNew = e.metaKey || e.ctrlKey;</span><br><span class="line">  <span class="keyword">if</span> (shouldOpenNew) &#123;</span><br><span class="line">    <span class="comment">// 即使加了noopener也无法解决性能问题，只能解决安全问题</span></span><br><span class="line">    <span class="built_in">window</span>.open(<span class="string">`/web/3?xxx=<span class="subst">$&#123;record.xxx&#125;</span>`</span>, <span class="string">'_blank'</span>, <span class="string">'noopener'</span>);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  router.push(&#123;</span><br><span class="line">    pathname: <span class="string">'/web/3'</span>,</span><br><span class="line">    query: &#123; <span class="attr">xxx</span>: record.xxx &#125;,</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>似乎一切都很顺利，没想到实际测试的时候出了点意外。这段代码在直接点击的时候没有问题，但是在打开新tab页的时候，却发生了父、子tab页同时奔溃的问题。奔溃后，无提示、无<br>经过观察，carsh都是由子tab引发的，且在子tab页打开一段时间后发生的。对子tab页面进行排查时，console里在奔溃前无明显的未捕获错误；从network信息中发现存在5条并发请求一直处于<code>pending</code>状态，penging着penging着就奔溃了。向提供服务的后端同学确认，这一批请求出了点问题，无法返回数据，修复后，我们页面奔溃的问题也解决了。<br>那么，真的时由于这5条请求超时导致页面crash的吗？为什么子页面奔溃会导致父页面也奔溃呢？<br>经过一番查询，发现一些有用的信息：</p>
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>似乎一切都很顺利，没想到实际测试的时候出了点意外。这段代码在直接点击的时候没有问题，但是在打开新tab页的时候，却发生了父、子tab页同时奔溃的问题。奔溃后，无提示、无响应，浏览器直接卡死。<br>经过观察，carsh都是由子tab引发的，且在子tab页打开一段时间后发生的。对子tab页面进行排查时，console里在奔溃前无明显的未捕获错误；从network信息中发现存在5条并发请求一直处于<code>pending</code>状态，penging着penging着就奔溃了。向提供服务的后端同学确认，这一批请求出了点问题，无法返回数据，修复后，我们页面奔溃的问题也解决了。初步怀疑是因为后端接口超时、而前端未处理空值引起的惨案。<br>那么，真的时由于这5条请求超时导致页面crash的吗？为什么子页面奔溃会导致父页面也奔溃呢？<br>经过一番查询，发现一些有用的信息：</p>
 <ul>
 <li>window.open打开的页面，将与打开它的页面共享一个进程和线程（ps:本文是针对chrome中的现象）。在子窗口可以耗尽资源，引发父窗口奔溃。</li>
 <li>chrome不同的标签页面使用不同<em>进程和线程</em>，但是有个例外，通过a标签的target=”_blank”属性，或者window.open(url)在新窗口中打开页面, 会与父窗口共用进程和线程。为什么呢？还是因为opener。因为opener里有DOM信息。两个进程中同时hold住了DOM信息，在多进程下很难道控制，所以干脆就放在一个进程里了。（<a href="https://imweb.io/topic/584cd0459be501ba17b10aaa" target="_blank" rel="noopener">参考</a>）</li>
 <li>opener全局对象引起的安全问题。使用a标签的target=”_blank”属性，或者window.open(url)在新窗口中打开页面时，子页面的opener是父页面<em>窗口对象</em>。虽然有同源限制，但可以通过window.opener.location = newURL来重写父页面的url，即使与父窗口的页面不同域。</li>
 </ul>
-<p>怀疑是因为后端超时、而前端未处理空值引起的。</p>
 <h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>虽然Crash的原因是由后端服务超时+前端异常未处理引起的，但是一番折腾发现winodw.open有这么多问题需要解决。<br>因此，这里采用了一个折中方案：</p>
 <ol>
 <li>采用<code>a</code>标签。解决window.open打开引起的共用进程和线程性能问题。</li>
@@ -557,7 +556,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-count">22</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -668,7 +667,21 @@
                     
                       
                     
-                    <span class="site-state-item-count">46</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">53</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

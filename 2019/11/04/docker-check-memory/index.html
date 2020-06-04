@@ -105,7 +105,7 @@
 <meta property="og:description" content="如今容器技术已经十分成熟了，前后端或运维的日常都离不开它。平时老是用公司线上 CI/CD 平台来完成部署，突然有了一台隔离环境需要徒手敲命令，却发现自己把命令行的操作指令遗忘了七七八八。这里记录一下 docker 的常用指令，特别是在单台环境部署多个服务时，docker-compose 的内容。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://yoursite.com/post-images/docker-arch.png">
-<meta property="og:updated_time" content="2020-04-01T07:18:51.560Z">
+<meta property="og:updated_time" content="2020-05-22T07:08:51.347Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="容器指令备忘">
 <meta name="twitter:description" content="如今容器技术已经十分成熟了，前后端或运维的日常都离不开它。平时老是用公司线上 CI/CD 平台来完成部署，突然有了一台隔离环境需要徒手敲命令，却发现自己把命令行的操作指令遗忘了七七八八。这里记录一下 docker 的常用指令，特别是在单台环境部署多个服务时，docker-compose 的内容。">
@@ -414,12 +414,18 @@
 </ul>
 <p>有时候我们想要运行镜像后，进入此镜像的 shell 中。这里有三个有用的指令：</p>
 <ul>
-<li><code>docker run -it your-image</code>适用于启动镜像时进入命令行界面。如果写成<code>docker run -it your-image /bin/bash</code>则不会执行 dockerfile 中的 CMD 命令，而是进入命令行待命。若参数带了<code>-d</code>或写成了<code>-itd</code>，则依旧进入后台运行，而不是进入命令行。</li>
-<li><code>docker attach container-id</code>用来连接到正在运行中的容器中。</li>
-<li><a href="https://stackoverflow.com/questions/25267372/correct-way-to-detach-from-a-container-without-stopping-it" target="_blank" rel="noopener">退出 attach 的镜像，不关闭它</a></li>
-<li><code>docker exec [OPTIONS] container-id COMMAND [ARG...]</code>用来在运行的镜像中执行相关命令。我们也可以使用<code>docker exec -it container-id /bin/bash</code>来进入一个运行的镜像。</li>
-<li>用守护进程进入没有明确 CMD 指令的镜像，这类镜像一起动就会自动退出：<code>docker run -it container-id /bin/sh</code>。</li>
-<li>dockerfile 指令:<ul>
+<li><p><code>docker run -it your-image</code>适用于启动镜像时进入命令行界面。如果写成<code>docker run -it your-image /bin/bash</code>则不会执行 dockerfile 中的 CMD 命令，而是进入命令行待命。若参数带了<code>-d</code>或写成了<code>-itd</code>，则依旧进入后台运行，而不是进入命令行。</p>
+</li>
+<li><p><code>docker attach container-id</code>用来连接到正在运行中的容器中。</p>
+</li>
+<li><p><a href="https://stackoverflow.com/questions/25267372/correct-way-to-detach-from-a-container-without-stopping-it" target="_blank" rel="noopener">退出 attach 的镜像，不关闭它</a></p>
+</li>
+<li><p><code>docker exec [OPTIONS] container-id COMMAND [ARG...]</code>用来在运行的镜像中执行相关命令。我们也可以使用<code>docker exec -it container-id /bin/bash</code>来进入一个运行的镜像。</p>
+</li>
+<li><p>用守护进程进入没有明确 CMD 指令的镜像，这类镜像一起动就会自动退出：<code>docker run -it container-id /bin/sh</code>。</p>
+</li>
+<li><p>dockerfile 指令:</p>
+<ul>
 <li><code>COPY</code> 复制文件</li>
 <li><code>ADD</code> 更高级的复制文件</li>
 <li><code>CMD</code> 容器启动命令</li>
@@ -431,6 +437,21 @@
 <li><code>WORKDIR</code> 指定工作目录</li>
 </ul>
 </li>
+<li><p>我们可以通过<code>docker network ls</code>来查看当前docker的网络类型。其包含以下几种驱动模式：</p>
+<ul>
+<li><code>bridge</code> 默认方式。采用网络桥接，功能强大</li>
+<li><code>host</code> 此方式下，容器直接使用宿主机的网络环境</li>
+<li><code>macvlan</code> 此方式下，可以为容器添加一个mac地址</li>
+<li><code>overlay</code> 此方式下，使不同主机上的容器可以互相通讯</li>
+<li><code>none</code> 此方式下，容器不启用任何网络</li>
+<li>有时候我们从外部访问容器，可能出现<code>connection reset by peer</code>的错误，而在容器内部却访问的通。我们可以试试使用<code>docker run -d --network=&quot;host&quot;</code>改变使用的网络方式，来判断是不是网络问题引起的。但是”host”模式并不是很安全。</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>查看存储卷 <code>docker volume ls</code></li>
+<li>创建存储卷 <code>docker volume create --name xxx</code></li>
+<li>获取容器/镜像的元数据 <code>docker inspect</code>可以查看镜像（image）、存储卷（volume）、容器（container）信息</li>
 </ul>
 <h3 id="在-ARM-架构下编译"><a href="#在-ARM-架构下编译" class="headerlink" title="在 ARM 架构下编译"></a>在 ARM 架构下编译</h3><p>现在 cpu 的架构很多，平时我们使用的都是<code>x86</code>，在此环境下编译出的镜像，是不能在<code>ARM</code>架构下使用的。想要构建<code>ARM</code>架构下的镜像，需要从头开始编译。<br>运行与架构不匹配的镜像时，可能出现以下错误:</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 一个arm架构的信息 uname -a</span></span><br><span class="line"><span class="comment"># Linux localhost.localdomain 4.14.0-115.el7a.0.1.aarch64 #1 SMP Sun Nov 25 20:54:21 UTC 2018 aarch64 aarch64 aarch64 GNU/Linux</span></span><br></pre></td></tr></table></figure>
@@ -607,7 +628,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-count">22</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -718,7 +739,21 @@
                     
                       
                     
-                    <span class="site-state-item-count">46</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">53</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

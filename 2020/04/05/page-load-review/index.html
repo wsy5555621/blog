@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.2" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.1.2',
+    sidebar: {"position":"right","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="最近对页面加载整个流程的细节有点遗忘，抽空利用 Chrome 的 Performance 观察了几遍，记录一下。">
+<meta name="keywords" content="Performance,DOM,CSSOM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图解页面加载">
+<meta property="og:url" content="http://yoursite.com/2020/04/05/page-load-review/index.html">
+<meta property="og:site_name" content="Surviver">
+<meta property="og:description" content="最近对页面加载整个流程的细节有点遗忘，抽空利用 Chrome 的 Performance 观察了几遍，记录一下。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-1.png">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-2.png">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-3.png">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-4.png">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-5.png">
+<meta property="og:image" content="http://yoursite.com/post-images/page-load-6.png">
+<meta property="og:updated_time" content="2020-05-27T08:08:17.275Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="图解页面加载">
+<meta name="twitter:description" content="最近对页面加载整个流程的细节有点遗忘，抽空利用 Chrome 的 Performance 观察了几遍，记录一下。">
+<meta name="twitter:image" content="http://yoursite.com/post-images/page-load-1.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2020/04/05/page-load-review/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>图解页面加载 | Surviver</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Surviver</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">For hunting purpose</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/05/page-load-review/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="shen">
+      <meta itemprop="description" content="Daily problem & solution">
+      <meta itemprop="image" content="/post-images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Surviver">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">图解页面加载
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-04-05 12:11:10" itemprop="dateCreated datePublished" datetime="2020-04-05T12:11:10+08:00">2020-04-05</time>
+            
+
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近对页面加载整个流程的细节有点遗忘，抽空利用 Chrome 的 Performance 观察了几遍，记录一下。</p>
+<a id="more"></a>
+
+<p>我们带着下面几个问题：</p>
+<ul>
+<li>script 会阻止 DOM 的构建吗？</li>
+<li>css 会阻止 JS 执行吗？css 会阻止 DOM 的构建吗？</li>
+<li>SPA 中为什么 css 放 header，script 放在 body 后？骨架图是什么原理？</li>
+<li>DomContentLoaded、readystate、Load 的关系是什么？</li>
+<li>DOM、CSSOM、Render Tree 之间到关系是什么？</li>
+</ul>
+<h2 id="总览"><a href="#总览" class="headerlink" title="总览"></a>总览</h2><p>我们选用了下面这个简单的 SPA 为例，利用 Chrome 录制了页面加载的全部过程。这是一个标准的 SPA 首页，在 head 中含有一个 CSS 资源，在 body 的最后含有一个 JS 脚本。同时，body 中还有一小段起到“骨架图”作用的片段。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"UTF-8"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, initial-scale=1"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>首屏测试<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"icon"</span> <span class="attr">href</span>=<span class="string">"/favicon.ico"</span> <span class="attr">type</span>=<span class="string">"image/x-icon"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">href</span>=<span class="string">"/assets/styles/index.3c893753.css"</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> /&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"loading"</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"loadAnimate"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="css">      <span class="selector-id">#loading</span> &#123;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">background-color</span>: <span class="selector-tag">rgba</span>(51, 51, 51, 0<span class="selector-class">.4</span>);</span></span><br><span class="line">        height: 100%;</span><br><span class="line">        width: 100%;</span><br><span class="line">        position: fixed;</span><br><span class="line">        z-index: 1;</span><br><span class="line">        margin-top: 0;</span><br><span class="line">        top: 0;</span><br><span class="line">        left: 0;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> &#123;</span></span><br><span class="line">        position: absolute;</span><br><span class="line">        top: 50%;</span><br><span class="line">        left: 50%;</span><br><span class="line">        width: 42px;</span><br><span class="line">        height: 42px;</span><br><span class="line">        margin: -21px 0 0 -21px;</span><br><span class="line">        animation: loadAnimate 5s infinite linear;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> <span class="selector-tag">span</span> &#123;</span></span><br><span class="line">        width: 20px;</span><br><span class="line">        height: 20px;</span><br><span class="line">        border-radius: 5px;</span><br><span class="line">        position: absolute;</span><br><span class="line">        background: red;</span><br><span class="line">        display: block;</span><br><span class="line">        animation: loadAnimate_span 1s infinite linear;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> <span class="selector-tag">span</span><span class="selector-pseudo">:nth-child(1)</span> &#123;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">background</span>: <span class="selector-id">#00b4ed</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> <span class="selector-tag">span</span><span class="selector-pseudo">:nth-child(2)</span> &#123;</span></span><br><span class="line">        left: 22px;</span><br><span class="line"><span class="css">        <span class="selector-tag">background</span>: <span class="selector-id">#27cbff</span>;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">animation-delay</span>: 0<span class="selector-class">.2s</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> <span class="selector-tag">span</span><span class="selector-pseudo">:nth-child(3)</span> &#123;</span></span><br><span class="line">        top: 22px;</span><br><span class="line"><span class="css">        <span class="selector-tag">background</span>: <span class="selector-id">#72ddff</span>;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">animation-delay</span>: 0<span class="selector-class">.4s</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      <span class="selector-id">#loadAnimate</span> <span class="selector-tag">span</span><span class="selector-pseudo">:nth-child(4)</span> &#123;</span></span><br><span class="line">        top: 22px;</span><br><span class="line">        left: 22px;</span><br><span class="line"><span class="css">        <span class="selector-tag">background</span>: <span class="selector-id">#b1ecff</span>;</span></span><br><span class="line"><span class="css">        <span class="selector-tag">animation-delay</span>: 0<span class="selector-class">.6s</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      @<span class="keyword">keyframes</span> loadAnimate &#123;</span></span><br><span class="line">        from &#123;</span><br><span class="line">          transform: rotate(0deg);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        to &#123;</span><br><span class="line">          transform: rotate(360deg);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"><span class="css">      @<span class="keyword">keyframes</span> loadAnimate_span &#123;</span></span><br><span class="line">        0% &#123;</span><br><span class="line">          transform: scale(1);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        50% &#123;</span><br><span class="line"><span class="css">          <span class="selector-tag">transform</span>: <span class="selector-tag">scale</span>(0<span class="selector-class">.5</span>);</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        100% &#123;</span><br><span class="line">          transform: scale(1);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    <span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span></span><br><span class="line"><span class="javascript">      <span class="function"><span class="keyword">function</span> <span class="title">removeLoading</span>(<span class="params"></span>) </span>&#123;</span></span><br><span class="line"><span class="javascript">        <span class="keyword">var</span> loading = <span class="built_in">document</span>.getElementById(<span class="string">"loading"</span>);</span></span><br><span class="line">        loading.parentNode.removeChild(loading);</span><br><span class="line"><span class="javascript">        <span class="built_in">document</span>.on<span class="string">`readystatechange`</span> = <span class="literal">null</span>;</span></span><br><span class="line">      &#125;</span><br><span class="line"><span class="javascript">      <span class="keyword">var</span> timeoutHandle;</span></span><br><span class="line"><span class="javascript">      <span class="built_in">document</span>.on<span class="string">`readystatechange`</span> = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span></span><br><span class="line"><span class="javascript">        <span class="built_in">console</span>.log(<span class="built_in">document</span>.readyState);</span></span><br><span class="line"><span class="javascript">        <span class="keyword">if</span> (<span class="built_in">document</span>.readyState === <span class="string">"interactive"</span>) &#123;</span></span><br><span class="line"><span class="javascript">          timeoutHandle = setTimeout(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span></span><br><span class="line">            removeLoading();</span><br><span class="line">          &#125;, 5000);</span><br><span class="line"><span class="javascript">        &#125; <span class="keyword">else</span> &#123;</span></span><br><span class="line"><span class="javascript">          <span class="keyword">if</span> (<span class="built_in">document</span>.readyState === <span class="string">"complete"</span>) &#123;</span></span><br><span class="line">            removeLoading();</span><br><span class="line"><span class="javascript">            <span class="keyword">if</span> (timeoutHandle) &#123;</span></span><br><span class="line">              clearTimeout(timeoutHandle);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;;</span><br><span class="line">    <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"root"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span></span></span><br><span class="line"><span class="tag">      <span class="attr">type</span>=<span class="string">"text/javascript"</span></span></span><br><span class="line"><span class="tag">      <span class="attr">src</span>=<span class="string">"/assets/scripts/index.a3c6208c.js"</span></span></span><br><span class="line"><span class="tag">    &gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们点击 Performance 面板的<code>Start profiling and reload page</code>按钮，等它执行完毕，得到了下面的记录：</p>
+<p><img src="/post-images/page-load-1.png" alt></p>
+<h2 id="白屏到-FP"><a href="#白屏到-FP" class="headerlink" title="白屏到 FP"></a>白屏到 FP</h2><p>这个阶段从发出请求获取 HTML 开始，到页面的第一次绘制为止，经历了资源下载、HTML 解析、DOM 构建、获取 CSS、获取 JS、CSSDOM 构建、JS 脚本编译和执行等过程。</p>
+<h3 id="解析-HTML"><a href="#解析-HTML" class="headerlink" title="解析 HTML"></a>解析 HTML</h3><p>下面截图展示的四个片段，是本次页面加载 Chrome 记录的所有<code>Parse HTML</code>片段（图中仅显示了 HTML 的解析，DOM 的构建没有明确标出）。我们可以发现，HTML 的解析在接收到部分数据流后就开始了，并不需要等待整个文档加载完成。同时，在解析到需要外部资源时，便会请求这些资源。<br>下面三个截图发生在 FP 之前，代表了三个时刻：</p>
+<ol>
+<li>解析到<code>link</code>标签，请求该 CSS 资源。</li>
+</ol>
+<p><img src="/post-images/page-load-2.png" alt></p>
+<ol start="2">
+<li>解析到 body 中的第二个<code>script</code>资源，请求该资源。按照浏览器的执行过程，执行到第一个<code>script</code>时，DOM 暂停构建，直到该脚本加载和执行完毕。此处我们发现，HTML 的解析依旧会继续，解析到了一个外部的脚本资源，便发出请求去获取。解析 HTML 和构建 DOM 关联密切，但不是完全等价。</li>
+</ol>
+<p><img src="/post-images/page-load-3.png" alt></p>
+<ol start="3">
+<li>FP 阶段。CSSOM 构建完成，执行内联<code>script</code>。在这个阶段后不久，我们的首屏动画就显示出来了。</li>
+</ol>
+<p><img src="/post-images/page-load-4.png" alt></p>
+<ol start="4">
+<li>在 FP 之后，浏览器等待<code>index.a3c6208c.js</code>下载完成，并进行解析和执行。执行完脚本后，浏览器便完成了初始文档的解析和 DOM 树的构建，随后触发了 DOMContendLoaded 事件。额外的，上述脚本又穿插了一系列资源，它们都立刻被请求了。</li>
+</ol>
+<p><img src="/post-images/page-load-5.png" alt></p>
+<h3 id="构建和暂停"><a href="#构建和暂停" class="headerlink" title="构建和暂停"></a>构建和暂停</h3><p>第三和第四个片段中，我们发现<code>Parse HTML</code>前都有一段<code>Evaluate Script</code>的时刻，这即是我们平常所说的遇到 JS 脚本，则暂停 DOM 构建，等待 JS 执行完成。<br>而第三阶段在脚本执行前又有一段 CSSOM 构建的过程，这便是 JS 脚本会等待 CSSOM 构建完成的一个例子。<br>我们也会发现，在等待第一个<code>script</code>脚本执行的过程中，第二个外联<code>script</code>脚本的请求却已经发出了。这是一个浏览器的优化，即使在 DOM 树暂停构建时，后面的资源也会被提前加载。<br>Chorme 记录的数据似乎没有明显的标志出 DOM 的构建（尚有疑问：解析 HTML 的同时，DOM 解析也在进行吗？）。</p>
+<p>对于 script，有两个属性可以使它不阻止 DOM 构建。设置了<code>defer</code>的外部脚本，不会在被解析到时立刻执行。浏览器会先下载它，然后在 HTML 文档全部解析后，DCL 事件触发前执行。设置了<code>async</code>的外部脚本，会在解析 HTML 的时候同步下载，并且一旦它下载完毕，就会立刻执行；但是它在下载的过程中，解析 HTML 的工作还在执行。<br>特别的，对于<code>type=module</code>的 script，<code>defer</code>属性是默认自带的（且不能设为 false），它总是在文档全部解析后才会执行；<code>async</code>属性将会使这类脚本在文档解析的同时下载其本身和所有依赖，一旦完成了下载，就立刻执行。更详细的内容，可以参考<a href="https://html.spec.whatwg.org/multipage/scripting.html#attr-script-async" target="_blank" rel="noopener">这里</a>。</p>
+<p>对于 css，如果它被设置为<code>media=print</code>，那它也就不会阻止 JS 的执行了。其他特殊<a href="https://drafts.csswg.org/mediaqueries/" target="_blank" rel="noopener">媒体查询</a>可以查询这里。</p>
+<h3 id="FP-需要什么"><a href="#FP-需要什么" class="headerlink" title="FP 需要什么"></a>FP 需要什么</h3><p>在第三个<code>Parse HTML</code>片段，我们发现浏览器第一次执行了<code>Layout</code>、<code>Paint</code>和<code>Composite</code>，不久之后，我们就看到了首屏的 loading 动画。这个阶段里，也是第一出现了<code>Parse Stylesheet</code>，之后，CSSOM 便准备就绪了。至此，我们拥有了 CSSOM 和部分 DOM。浏览器为了减少白屏等待的时间，会依照目前已有的资源，生成一颗<code>render tree</code>，一旦<code>render tree</code>准备就绪了，浏览器就可以绘制页面了。</p>
+<h2 id="DCL-和-Onload"><a href="#DCL-和-Onload" class="headerlink" title="DCL 和 Onload"></a>DCL 和 Onload</h2><p>在 FP 之后的一段时间内，DOM 的解析依旧没有恢复，这是因为第二个 JS 脚本还没有下载完成。这段时间内，浏览器只能一直等待，页面上仅展现 FP 阶段的内容。当脚本文件完成下载、解析和执行后，浏览器恢复了 DOM 的构建。在所有的 HTML 解析完成、DOM 树构建完成后，浏览器便触发了<a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event" target="_blank" rel="noopener">DCL</a>事件。同时，这个 JS 又给文档添加了额外的 JS/CSS 资源，在这部分资源全部获取并解析后，Window 的 Onload 事件才会被触发。</p>
+<p>DCL 和 Onload 事件有什么区别呢？</p>
+<ul>
+<li>在触发时机上。当<code>HTML被完全加载以及解析时</code>，DCL 事件便会触发，而不必等待样式表，图片或者子框架完成加载。Onload 则需要等待整个页面所有资源都加载完毕，才会被触发。</li>
+<li>除了 window 的 load 事件外，image/JS/CSS/XMLHttpRequest 都有其 load 事件。</li>
+</ul>
+<p>readyState 有 4 个值，会在<code>readystatechange</code>事件中触发。</p>
+<ul>
+<li>uninitialized - 还未开始载入</li>
+<li>loading - 载入中</li>
+<li>interactive - 已加载，文档与用户可以开始交互</li>
+<li>complete - 载入完成</li>
+</ul>
+<p>它们之间的关系是：</p>
+<ol>
+<li>readystate: interactive</li>
+<li>DOMContentLoaded</li>
+<li>readystate: complete</li>
+<li>load</li>
+</ol>
+<h2 id="FCP、FMP、LCP"><a href="#FCP、FMP、LCP" class="headerlink" title="FCP、FMP、LCP"></a>FCP、FMP、LCP</h2><p>这几个概念是 lighthouse 提出的性能指标，用来衡量 web 应用的性能。</p>
+<ul>
+<li>FCP First Contentful Paint</li>
+<li>FMP First Meaningful Paint</li>
+<li>LCP Largest Contentful Paint</li>
+<li>lighthouse 是怎么定义的这些指标？可以从 lighthouse<a href="https://github.com/GoogleChrome/lighthouse/blob/1f07249f3f8653d66766815fb5ff4f125878cc28/lighthouse-core/audits/metrics/first-contentful-paint.js" target="_blank" rel="noopener">代码</a>中查看。</li>
+<li><a href="https://zhuanlan.zhihu.com/p/91365316" target="_blank" rel="noopener">Lighthouse 测试内幕</a></li>
+</ul>
+<h2 id="有关-CSSOM"><a href="#有关-CSSOM" class="headerlink" title="有关 CSSOM"></a>有关 CSSOM</h2><p>CSSOM 即 CSS Object Model，是一颗包含 CSS 有关信息的树，和 DOM 结构相似。它也提供了一系列的 API 以供 JS 来操作 CSS。</p>
+<h3 id="CSSStyleSheet"><a href="#CSSStyleSheet" class="headerlink" title="CSSStyleSheet"></a>CSSStyleSheet</h3><p>我们可以通过<code>document.styleSheets</code>来查询本文档应用的 CSS。一般的，我们可以通过外部样式表、内部样式表、内联样式三种方式引入 CSS 规则，那么它们都能通过<code>document.styleSheets</code>查询到吗？我们用下面的片段来进行试验。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">body</span> <span class="attr">style</span>=<span class="string">"color: red;"</span>&gt;</span></span><br><span class="line">    text</span><br><span class="line">  <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">style</span>&gt;</span></span><br><span class="line">    body &#123;</span><br><span class="line">      color: rgb(139, 195, 74);</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/post-images/page-load-6.png" alt></p>
+<p>可以发现，内联样式是不会写入<code>document.styleSheets</code>中的。而外部样式表和内部样式表都会被加入<code>document.styleSheets</code>中，并且有一个<code>ownerNode</code>属性表明它来自<code>head</code>还是<code>style</code>标签。根据 HTML 文档，内联 style 会<a href="https://html.spec.whatwg.org/multipage/dom.html#the-style-attribute" target="_blank" rel="noopener">返回</a>一个<code>CSSStyleDeclaration</code>对象，挂载在该节点的<code>style</code>属性中；而 link、style 标签则会<a href="https://html.spec.whatwg.org/multipage/semantics.html#the-style-element" target="_blank" rel="noopener">返回</a>一个<code>CSSStyleSheet</code>对象，挂载在<code>document.styleSheets</code>中；同时，还可通过该节点的<code>sheet</code>属性访问。</p>
+<h3 id="CSSStyleDeclaration"><a href="#CSSStyleDeclaration" class="headerlink" title="CSSStyleDeclaration"></a>CSSStyleDeclaration</h3><p>这是我们最常打交道的对象，它可以从三个地方来访问：</p>
+<ol>
+<li>HTMLElement.style。用来处理 HTML 元素的内联 CSS。</li>
+<li>document.styleSheets[0].cssRules[0].style。用来处理外/内部样式表中的 CSS。</li>
+<li>Window.getComputedStyle(HTMLElement)。该方法返回的只读的<code>CSSStyleDeclaration</code>对象。</li>
+</ol>
+<p>更多的内容可以阅读 PDF 中的文件。</p>
+<h2 id="TL-DR"><a href="#TL-DR" class="headerlink" title="TL;DR"></a>TL;DR</h2><ul>
+<li>script 会阻止 DOM 的构建。</li>
+<li>页面加载时如果存在 CSS 资源，则必须等 CSSOM 全部构建完成，才会执行 script，因为 JS 可能查询、修改 CSSOM。如果存在多个 CSS 资源，因为后面的规则可能覆盖前面的规则，所以必须等待全部 CSS 加载完成，才会进入下一个流程。</li>
+<li>DOM 和 CSSOM 结合在一起，才能生成 Render Tree。有了 Render Tree 之后，浏览器就可以进行绘制了。DOM 的构建会被 JS 阻止，而 JS 执行又需要查询 CSSOM。所以 script 和 css 都是 render block 的资源。所以我们应当尽早准备好 CSS 资源，尽量把 JS 资源放在文档的后面来解析。骨架图也是基于这个原理。我们可以参照“<a href="https://developers.google.com/web/fundamentals/performance/critical-rendering-path/adding-interactivity-with-javascript?hl=zh-cn" target="_blank" rel="noopener">优化关键渲染路径</a>”，了解和优化 HTML、CSS 和 JavaScript 之间的依赖关系谱。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="https://stackoverflow.com/questions/34269416/when-does-parsing-html-dom-tree-happen" target="_blank" rel="noopener">when does parsing html dom tree happen</a></li>
+<li><a href="https://stackoverflow.com/questions/34698433/what-is-involved-in-chromes-recalculate-style-event" target="_blank" rel="noopener">when recalculate style event</a></li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/Performance/" rel="tag"># Performance</a>
+          
+            <a href="/tags/DOM/" rel="tag"># DOM</a>
+          
+            <a href="/tags/CSSOM/" rel="tag"># CSSOM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/04/04/gray-day/" rel="next" title="灰色">
+                <i class="fa fa-chevron-left"></i> 灰色
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/05/stable-sort/" rel="prev" title="稳定排序">
+                稳定排序 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/post-images/avatar.png" alt="shen">
+            
+              <p class="site-author-name" itemprop="name">shen</p>
+              <div class="site-description motion-element" itemprop="description">Daily problem & solution</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">53</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:shenyu.wang64@gmail.com" title="E-Mail &rarr; mailto:shenyu.wang64@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#总览"><span class="nav-number">1.</span> <span class="nav-text">总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#白屏到-FP"><span class="nav-number">2.</span> <span class="nav-text">白屏到 FP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#解析-HTML"><span class="nav-number">2.1.</span> <span class="nav-text">解析 HTML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构建和暂停"><span class="nav-number">2.2.</span> <span class="nav-text">构建和暂停</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FP-需要什么"><span class="nav-number">2.3.</span> <span class="nav-text">FP 需要什么</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DCL-和-Onload"><span class="nav-number">3.</span> <span class="nav-text">DCL 和 Onload</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FCP、FMP、LCP"><span class="nav-number">4.</span> <span class="nav-text">FCP、FMP、LCP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#有关-CSSOM"><span class="nav-number">5.</span> <span class="nav-text">有关 CSSOM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CSSStyleSheet"><span class="nav-number">5.1.</span> <span class="nav-text">CSSStyleSheet</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSSStyleDeclaration"><span class="nav-number">5.2.</span> <span class="nav-text">CSSStyleDeclaration</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TL-DR"><span class="nav-number">6.</span> <span class="nav-text">TL;DR</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">shen</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+  <div class="footer-custom">底漏了</div>
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.2"></script>
+
+  <script src="/js/motion.js?v=7.1.2"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.2"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.2"></script>
+
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.2"></script>
+<script src="/js/post-details.js?v=7.1.2"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.2"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
